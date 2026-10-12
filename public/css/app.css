@@ -1,0 +1,1967 @@
+/* ==========================================================================
+   Sistem Penjadwalan Pengerjaan Tugas Mahasiswa
+   Palet: latar halaman abu-abu netral, semua elemen lain pink;
+   hanya dua hue (pink dan abu-abu netral), tanpa warna lain.
+   Semua nilai warna hex/rgb hanya ada di blok :root; di bagian lain memakai
+   var(--nama). Dipakai juga oleh SVG di Blade dan oleh JS Gantt.
+   Gaya umum: kerangka halaman, navbar pink, kartu, tabel, form, Gantt, PERT.
+   ========================================================================== */
+
+:root {
+    color-scheme: dark;
+
+    /* Latar halaman: abu-abu tua */
+    --bg: #1f1f24;
+    --bg-top: #1f1f24;
+
+    /* Navbar dan footer: lebih gelap lagi supaya kontras */
+    --header: #15151a;
+    --header-text: #ff8fb8;
+
+    /* Kolom, kartu, panel: lapisan abu-abu yang jelas bedanya */
+    --surface: #2e2e35;
+    --surface-2: #383841;
+    --chip: #45454f;
+    --border: #5a5a66;
+
+    /* Teks: pink terang tapi tetap berwarna, bukan pastel */
+    --text: #ffe0ec;
+    --text-muted: #f2a9c6;
+
+    /* Aksen pink: jenuh dan hidup */
+    --primary: #ff5c9a;
+    --primary-hover: #ff7fb0;
+    --on-primary: #2b0a18;
+    --track: #18181c;
+    --focus: #ffb3d1;
+    --shadow: rgba(0, 0, 0, 0.5);
+
+    /* Warna tambahan */
+    --deep: #ff7dae;
+    --on-deep: #2b0a18;
+    --bar: #e0508a;
+    --rose: #2a2a31;
+    --todo-bg: #4a4a55;
+    --todo-text: #e9e9f0;
+    --doing-text: #ff9dc2;
+    --strip-todo: #8c8c98;
+    --grid-line: #3e3e47;
+    --hero-from: #6e3b55; /* banner jadi pink-gelap kaya, bukan abu keruh */
+    --arrow: #ff8fb8;
+    --focus-ring: rgba(255, 92, 154, 0.45);
+    --backdrop: rgba(8, 8, 10, 0.75);
+    --nav-hover: rgba(255, 125, 174, 0.16);
+    --wash: rgba(255, 125, 174, 0.16);
+    --header-text-dim: rgba(255, 143, 184, 0.85);
+    --shadow-hover: rgba(0, 0, 0, 0.65);
+
+    --radius: 14px;
+    --radius-control: 10px;
+    --space: 8px;
+    --shadow-card: 0 2px 8px var(--shadow);
+    --shadow-card-hover: 0 6px 16px var(--shadow-hover);
+    --transition: 150ms ease;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* Kerangka: viewport penuh, kolom, footer menempel di bawah, latar polos. */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+a {
+    color: var(--deep);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    font-size: 2rem; /* judul halaman 32px */
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 8px;
+}
+
+h2 {
+    font-size: 1.25rem; /* judul bagian 20px */
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+
+h3,
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 24px 0 8px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    width: 100%;
+}
+
+.main {
+    flex: 1 0 auto;
+    padding-top: 32px;
+    padding-bottom: 48px;
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+.small {
+    font-size: 0.875rem;
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
+.icon {
+    vertical-align: -2px;
+    flex: 0 0 auto;
+}
+
+/* Fokus keyboard terlihat jelas di mana pun. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Navbar (tinggi 64px, latar --header)
+   -------------------------------------------------------------------------- */
+
+.navbar {
+    background: var(--header);
+    color: var(--header-text);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--header-text);
+}
+
+.brand:hover {
+    text-decoration: none;
+    color: var(--text);
+}
+
+/* Kotak logo 36px berisi ikon kalender. */
+.brand-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--chip);
+    color: var(--header-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: var(--radius-control);
+    color: var(--header-text);
+    font-size: 0.95rem;
+}
+
+.nav-link:hover {
+    background: var(--nav-hover);
+    text-decoration: none;
+}
+
+/* Halaman aktif: garis bawah pink. */
+.nav-link.active {
+    text-decoration: underline;
+    text-decoration-color: var(--primary-hover);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Footer (menempel di bawah layar)
+   -------------------------------------------------------------------------- */
+
+.footer {
+    background: var(--header);
+    color: var(--header-text-dim); /* --header-text pada opasitas 0.8 */
+    padding: 24px 0;
+    font-size: 0.85rem;
+    margin-top: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Notifikasi (role="status", hilang otomatis 4 detik)
+   -------------------------------------------------------------------------- */
+
+.alert {
+    position: relative;
+    padding: 12px 44px 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    box-shadow: var(--shadow-card);
+}
+
+.alert-success {
+    background: var(--chip);
+    border-color: var(--border);
+    color: var(--deep);
+}
+
+.alert-warning {
+    background: var(--rose);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.alert-error {
+    background: var(--primary);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+.alert-info {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.alert-list {
+    margin: 6px 0 0;
+    padding-left: 20px;
+}
+
+.alert-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    border-radius: 6px;
+    transition: background var(--transition);
+}
+
+.alert-close:hover {
+    background: var(--wash);
+}
+
+/* --------------------------------------------------------------------------
+   Header halaman, kartu, tombol
+   -------------------------------------------------------------------------- */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.page-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+/* Lencana lokasi halaman. */
+.breadcrumb {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.breadcrumb a {
+    color: var(--deep);
+}
+
+.crumb-sep {
+    margin: 0 6px;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.empty-state-inline {
+    padding: 24px 8px;
+}
+
+.empty-illustration {
+    margin-bottom: 8px;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+/* Tombol: tinggi 44px, sudut 10px, transisi 150ms. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 18px;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    line-height: 1.2;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        color var(--transition),
+        box-shadow var(--transition),
+        transform var(--transition);
+}
+
+.btn:hover {
+    background: var(--chip);
+    text-decoration: none;
+}
+
+/* Tombol utama: isi --primary, teks --on-primary. Maksimal satu per layar. */
+.btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+/* Tombol bahaya: teks rose tua, tepi --border. */
+.btn-danger {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--primary-hover);
+}
+
+.btn-danger:hover {
+    background: var(--chip);
+    border-color: var(--border);
+    color: var(--primary-hover);
+}
+
+.btn-sm {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 0.875rem;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Badge, tag, progress
+   -------------------------------------------------------------------------- */
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+/* Badge status: teks + ikon di view agar tidak hanya mengandalkan warna. */
+.status-selesai {
+    background: var(--deep);
+    color: var(--on-deep);
+}
+
+.status-terlambat {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+.status-sedang-dikerjakan {
+    background: var(--chip);
+    color: var(--doing-text);
+    border-color: var(--border);
+}
+
+.status-belum-dimulai {
+    background: var(--todo-bg);
+    color: var(--todo-text);
+}
+
+/* Label kecil (informasi tidak hanya lewat warna). */
+.tag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    background: var(--chip);
+    color: var(--text-muted);
+}
+
+.tag-critical {
+    background: var(--primary);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+.tag-priority {
+    background: var(--chip);
+    border-color: var(--border);
+    color: var(--deep);
+}
+
+.progress {
+    position: relative;
+    width: 110px;
+    height: 14px;
+    background: var(--track);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-thin {
+    height: 8px;
+    width: 96px;
+}
+
+.progress-lg {
+    width: 100%;
+    height: 12px;
+    margin-top: 8px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.2s ease;
+}
+
+.progress-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-num {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-width: 40px;
+}
+
+/* --------------------------------------------------------------------------
+   Beranda: hero + kartu rencana
+   -------------------------------------------------------------------------- */
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, var(--hero-from), var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-card);
+}
+
+.hero-text {
+    min-width: 0;
+    flex: 1 1 380px;
+}
+
+.hero-title {
+    margin: 0 0 8px;
+}
+
+.hero-lead {
+    margin: 0 0 16px;
+    font-size: 1.05rem;
+    color: var(--text);
+    max-width: 56ch;
+}
+
+.hero-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--chip);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.chip strong {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.chip-late {
+    background: var(--primary);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+.chip-late strong {
+    color: var(--on-primary);
+}
+
+.hero-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.plan-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-top: 14px;
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.plan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+}
+
+/* Strip warna 6px di sisi atas kartu, ikuti warna status. */
+.strip-done {
+    border-top: 6px solid var(--deep);
+}
+
+.strip-late {
+    border-top: 6px solid var(--primary);
+}
+
+.strip-doing {
+    border-top: 6px solid var(--bar);
+}
+
+.strip-todo {
+    border-top: 6px solid var(--strip-todo);
+}
+
+.plan-card-title {
+    font-size: 1.1rem;
+    margin: 0;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.plan-card-title a {
+    color: var(--text);
+}
+
+.plan-card-title a:hover {
+    color: var(--primary-hover);
+}
+
+/* Judul menutupi seluruh kartu: satu klik membuka rencana. */
+.plan-card-title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+}
+
+.plan-card-desc {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.plan-card-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.plan-card-deadline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.plan-card-deadline .icon {
+    color: var(--deep);
+}
+
+.plan-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.plan-progress {
+    flex: 1 1 auto;
+    width: auto;
+    height: 8px;
+}
+
+.plan-card-eval {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+}
+
+.eval-ok {
+    background: var(--chip);
+    color: var(--deep);
+}
+
+.eval-late {
+    background: var(--primary);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+.plan-card-actions {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Header halaman rencana + menu "Lainnya"
+   -------------------------------------------------------------------------- */
+
+.plan-header-main {
+    min-width: 0;
+}
+
+.plan-desc {
+    margin: 0 0 4px;
+    color: var(--text-muted);
+}
+
+.plan-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+.plan-info .dot {
+    color: var(--border);
+}
+
+.menu {
+    position: relative;
+    display: inline-block;
+}
+
+.menu summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.menu-pop {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 20;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-card-hover);
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    min-height: 40px;
+    border: none;
+    background: none;
+    color: var(--text);
+    font-size: 0.92rem;
+    font-family: inherit;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: background var(--transition);
+}
+
+.menu-item:hover {
+    background: var(--chip);
+    text-decoration: none;
+}
+
+.menu-item-danger {
+    color: var(--primary-hover);
+}
+
+.menu-item-danger:hover {
+    background: var(--chip);
+}
+
+/* --------------------------------------------------------------------------
+   Tab (baris pill, aktif berlatar --pink-soft)
+   -------------------------------------------------------------------------- */
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.tab {
+    padding: 8px 16px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition:
+        background var(--transition),
+        color var(--transition);
+}
+
+.tab:hover {
+    color: var(--text);
+    background: var(--chip);
+    text-decoration: none;
+}
+
+.tab.active {
+    background: var(--primary);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Tabel
+   -------------------------------------------------------------------------- */
+
+.table-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+}
+
+.table th,
+.table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.table thead th {
+    background: var(--surface-2);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Baris induk menonjol, baris biasa bergantian halus, hover selalu rose. */
+.table tbody tr.row-parent {
+    background: var(--surface-2);
+}
+
+.table tbody tr.row-parent td {
+    font-weight: 600;
+}
+
+.table tbody tr:nth-child(even):not(.row-parent) {
+    background: var(--rose);
+}
+
+.table tbody tr:not(.row-parent):hover {
+    background: var(--chip);
+}
+
+.table tbody tr.row-parent:hover {
+    background: var(--chip);
+}
+
+.table-compact th,
+.table-compact td {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+}
+
+.table-tasks td {
+    font-size: 0.92rem;
+}
+
+.row-critical {
+    background: var(--chip) !important;
+}
+
+.col-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.col-actions .btn,
+.col-actions .inline-form {
+    margin-left: 4px;
+}
+
+.task-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.task-no {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 18px;
+}
+
+.task-name {
+    font-weight: 600;
+}
+
+.task-sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    padding-left: 26px;
+    min-height: 18px;
+}
+
+.summary-mark {
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Form (input berlatar --chip)
+   -------------------------------------------------------------------------- */
+
+.form-note {
+    margin: 0 0 12px;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.form-heading {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.form-section {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: none;
+    color: var(--text);
+    margin: 24px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-section:first-of-type {
+    margin-top: 8px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.field-full {
+    grid-column: 1 / -1;
+}
+
+.field label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.req {
+    color: var(--primary-hover);
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: var(--chip);
+    color: var(--text);
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Field dengan error: garis tepi rose tua. */
+.field:has(.field-error) input,
+.field:has(.field-error) select,
+.field:has(.field-error) textarea {
+    border-color: var(--primary-hover);
+}
+
+.hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.field-error {
+    color: var(--primary-hover);
+    font-size: 0.85rem;
+    margin: 2px 0 0;
+}
+
+.checkbox-row,
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    min-height: 40px;
+}
+
+.checkbox input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.note {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-control);
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    margin: 16px 0 0;
+}
+
+.repeater {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.repeater-row {
+    display: grid;
+    grid-template-columns: 170px minmax(160px, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.repeater-pred .repeater-row {
+    grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 1.6fr) 90px auto;
+}
+
+/* Slider progress + angka persen */
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-row input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: var(--primary);
+    min-height: 40px;
+}
+
+.slider-value {
+    min-width: 52px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    padding: 6px 8px;
+    font-size: 0.92rem;
+}
+
+/* Pengaturan hari kerja (<details>) */
+.work-settings {
+    margin-top: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0 16px;
+    background: var(--surface);
+}
+
+.work-settings > summary {
+    cursor: pointer;
+    padding: 12px 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.work-settings[open] > summary {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+
+.work-days {
+    padding: 12px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Statistik, banner
+   -------------------------------------------------------------------------- */
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+/* Kartu angka: ikon kecil, angka besar, label kecil. */
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-control);
+    background: var(--chip);
+    color: var(--deep);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat .stat-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.stat .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+/* Banner deadline: ikon + teks, bukan hanya warna. */
+.banner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    border: 1px solid;
+    font-size: 1rem;
+}
+
+.banner-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 2px solid currentColor;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.banner-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.banner-ok {
+    background: var(--chip);
+    border-color: var(--border);
+    color: var(--deep);
+}
+
+.banner-late {
+    background: var(--primary);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+}
+
+.def-list {
+    margin: 0;
+}
+
+.def-list dt {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 10px;
+}
+
+.def-list dd {
+    margin: 2px 0 0;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.page-intro {
+    margin-bottom: 16px;
+}
+
+.page-intro .section-title {
+    margin-top: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Legenda + saklar "Sorot jalur kritis"
+   -------------------------------------------------------------------------- */
+
+.legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Task kritis hanya tampil saat sorotan aktif. */
+.legend-critical {
+    display: none;
+}
+
+.tab-content:has(#gantt-chart.active) .legend-critical {
+    display: inline-flex;
+}
+
+.swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 1px solid var(--border);
+}
+
+.swatch-task {
+    background: var(--bar);
+}
+
+.swatch-critical {
+    background: var(--primary);
+    border-color: var(--text);
+}
+
+.swatch-off {
+    background: repeating-linear-gradient(
+        45deg,
+        var(--surface-2),
+        var(--surface-2) 4px,
+        var(--bg) 4px,
+        var(--bg) 8px
+    );
+}
+
+.swatch-deadline {
+    background: var(--text);
+    width: 4px;
+    border-radius: 2px;
+    border: none;
+}
+
+.swatch-today {
+    background: var(--text-muted);
+    width: 4px;
+    border-radius: 2px;
+    border: none;
+}
+
+.switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 6px 14px 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.switch:hover {
+    background: var(--chip);
+}
+
+.switch-track {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    transition: background var(--transition);
+    flex: 0 0 auto;
+}
+
+.switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--text-muted);
+    transition:
+        transform var(--transition),
+        background var(--transition);
+}
+
+.switch[aria-checked="true"] .switch-track {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.switch[aria-checked="true"] .switch-thumb {
+    transform: translateX(16px);
+    background: var(--on-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Dialog konfirmasi hapus
+   -------------------------------------------------------------------------- */
+
+.confirm-dialog {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    padding: 24px;
+    max-width: 440px;
+    width: calc(100% - 32px);
+    box-shadow: 0 8px 24px var(--shadow-hover);
+}
+
+.confirm-dialog::backdrop {
+    background: var(--backdrop);
+}
+
+.confirm-title {
+    font-size: 1.05rem;
+    margin: 0 0 8px;
+}
+
+.confirm-message {
+    margin: 0 0 20px;
+    color: var(--text);
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Gantt Chart
+   -------------------------------------------------------------------------- */
+
+.gantt {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    --col-width: 40px;
+}
+
+.gantt-left {
+    flex: 0 0 auto;
+    min-width: 380px;
+    max-width: 460px;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    z-index: 2;
+}
+
+.gantt-head-left,
+.gantt-row-left {
+    display: grid;
+    grid-template-columns: 44px minmax(140px, 1fr) 130px 64px;
+    align-items: center;
+}
+
+.gantt-head-left {
+    height: 58px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.gantt-row-left {
+    height: 40px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+}
+
+.gantt-row-left .gl {
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gantt-row-left .gl-no {
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.gantt-row-left .gl-dur,
+.gantt-head-left .gl-dur {
+    text-align: center;
+}
+
+.gantt-row-left .gl-member {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.gantt-right {
+    flex: 1 1 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.gantt-timeline {
+    position: relative;
+    background: var(--surface);
+}
+
+.gantt-head-right {
+    height: 58px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+}
+
+.gantt-months {
+    display: flex;
+    height: 28px;
+    border-bottom: 1px solid var(--border);
+}
+
+.gantt-month {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.gantt-days {
+    display: flex;
+    height: 30px;
+}
+
+.gantt-day {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding-top: 7px;
+    border-right: 1px solid var(--border);
+    flex: 0 0 auto;
+}
+
+.gantt-day.off {
+    background: var(--surface-2);
+}
+
+.gantt-day.is-today {
+    color: var(--deep);
+    font-weight: 800;
+    background: var(--chip);
+}
+
+.gantt-body {
+    position: relative;
+}
+
+.gantt-grid {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+/* Kisi sangat tipis. */
+.gantt-col {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-right: 1px solid var(--grid-line);
+}
+
+.gantt-col.off {
+    background: var(--surface-2);
+}
+
+.gantt-col.holiday {
+    background: var(--surface-2);
+}
+
+.gantt-row {
+    position: relative;
+    height: 40px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Semua batang task warna pink yang sama. */
+.gantt-bar {
+    position: absolute;
+    top: 9px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--bar);
+    overflow: hidden;
+    z-index: 3;
+    cursor: default;
+}
+
+/* Isian progress pink lebih gelap. */
+.gantt-bar-progress {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 6px 0 0 6px;
+}
+
+/* Batang ringkasan: plum pekat. */
+.gantt-bar.is-summary {
+    background: var(--deep);
+    border-radius: 4px;
+    height: 14px;
+    top: 13px;
+}
+
+.gantt-bar.is-summary::before,
+.gantt-bar.is-summary::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-top: 11px solid var(--deep);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+}
+
+.gantt-bar.is-summary::before {
+    left: 0;
+}
+
+.gantt-bar.is-summary::after {
+    right: 0;
+}
+
+/* Saat sorotan jalur kritis aktif: batang kritis --primary + tepi tebal --text. */
+#gantt-chart.active .gantt-bar.is-critical {
+    background: var(--primary);
+    box-shadow: inset 0 0 0 2.5px var(--text);
+}
+
+.gantt-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.gantt-line span {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Deadline: garis solid --text. */
+.gantt-deadline {
+    background: var(--text);
+}
+
+.gantt-deadline span {
+    background: var(--deep);
+    color: var(--on-deep);
+}
+
+/* Hari ini: garis putus-putus --text-muted. */
+.gantt-today {
+    background: repeating-linear-gradient(
+        to bottom,
+        var(--text-muted) 0,
+        var(--text-muted) 6px,
+        transparent 6px,
+        transparent 12px
+    );
+}
+
+.gantt-today span {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.gantt-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.gantt-arrow-path {
+    fill: none;
+    stroke: var(--arrow);
+    stroke-width: 1.4;
+}
+
+.gantt-arrow-label {
+    font-size: 10px;
+    fill: var(--text-muted);
+    font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Diagram jaringan PERT
+   -------------------------------------------------------------------------- */
+
+.diagram-wrap {
+    overflow: hidden;
+}
+
+.svg-scroll {
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.pert-node rect {
+    fill: var(--surface);
+    stroke: var(--border);
+    stroke-width: 1.5;
+}
+
+.pert-node.is-critical rect {
+    stroke: var(--primary);
+    stroke-width: 2.5;
+    fill: var(--chip);
+}
+
+.pert-node .pert-title {
+    font-size: 14px;
+    font-weight: 700;
+    fill: var(--text);
+}
+
+.pert-node .pert-meta {
+    font-size: 12px;
+    fill: var(--text-muted);
+}
+
+.pert-node .pert-badge {
+    font-size: 11px;
+    font-weight: 800;
+    fill: var(--deep);
+}
+
+.pert-edge {
+    fill: none;
+    stroke: var(--arrow);
+    stroke-width: 1.5;
+}
+
+.pert-edge-label {
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--text);
+    text-anchor: middle;
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 3px;
+}
+
+/* Sorotan jalur kritis PERT (saklar aktif). */
+#pert-diagram.active .pert-node.is-critical rect {
+    fill: var(--chip);
+    stroke: var(--primary);
+    stroke-width: 3;
+}
+
+#pert-diagram:not(.active) .pert-node.is-critical rect {
+    fill: var(--surface);
+    stroke: var(--border);
+    stroke-width: 1.5;
+}
+
+#pert-diagram:not(.active) .pert-badge {
+    display: none;
+}
+
+#pert-diagram.active .pert-node.is-critical .pert-badge {
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Responsif
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    .grid-3,
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gantt-left {
+        min-width: 260px;
+        max-width: 300px;
+    }
+
+    .gantt-head-left,
+    .gantt-row-left {
+        grid-template-columns: 36px minmax(110px, 1fr) 0 56px;
+    }
+
+    .gantt-head-left .gl-member,
+    .gantt-row-left .gl-member {
+        display: none;
+    }
+
+    .repeater-row,
+    .repeater-pred .repeater-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 16px;
+    }
+
+    /* Navbar ringkas: logo kompak + tombol "+ Buat" pendek. */
+    .brand-text {
+        font-size: 0.95rem;
+    }
+
+    .nav {
+        gap: 6px;
+    }
+
+    .nav-link {
+        padding: 8px;
+    }
+
+    .navbar .btn-primary {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+    }
+
+    .page-actions {
+        width: 100%;
+    }
+
+    .hero {
+        flex-direction: column;
+        padding: 24px;
+    }
+
+    .hero-actions {
+        width: 100%;
+    }
+
+    .tab {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+    }
+
+    .plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-pop {
+        right: auto;
+        left: 0;
+    }
+
+    .stat .stat-value {
+        font-size: 1.5rem;
+    }
+}
