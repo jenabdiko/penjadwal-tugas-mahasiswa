@@ -1,3 +1,19 @@
+   ## Tampilan Aplikasi
+
+   ### Beranda
+   ![Tampilan Beranda](screenshot-beranda.png)
+
+   ### Gantt Chart
+   ![Tampilan Gantt Chart](screenshot-gantt.png)
+
+
+
+
+
+
+
+
+
 # Sistem Penjadwalan Pengerjaan Tugas Mahasiswa
 
 Aplikasi web untuk membantu mahasiswa merencanakan tahapan pengerjaan tugas (individu maupun kelompok) dengan konsep manajemen proyek ala GanttProject: **Task, Durasi, Urutan pengerjaan (dependency), Resource (anggota), Gantt Chart, dan Jalur kritis (Critical Path)**.
